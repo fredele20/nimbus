@@ -9,7 +9,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fredele20/nimbus/internal/platform/cache"
 	"github.com/fredele20/nimbus/internal/platform/config"
+	"github.com/fredele20/nimbus/internal/platform/database"
 	"github.com/fredele20/nimbus/internal/platform/httpserver"
 	"github.com/fredele20/nimbus/internal/platform/logger"
 )
@@ -21,6 +23,20 @@ func main() {
 	}
 
 	log := logger.New(cfg.Logger)
+
+	db, err := database.New(cfg.Database, log)
+	if err != nil {
+		log.Error("failed to connect database", "error", err)
+		os.Exit(1)
+	}
+	_ = db
+
+	redisClient, err := cache.New(cfg.Redis, log)
+	if err != nil {
+		log.Error("failed to connect redis", "error", err)
+		os.Exit(1)
+	}
+	_ = redisClient
 
 	server := httpserver.New(cfg.Server, log)
 
@@ -36,7 +52,7 @@ func main() {
 
 	<-quit
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
