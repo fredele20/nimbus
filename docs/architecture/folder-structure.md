@@ -25,3 +25,7 @@ Project documentation.
 ## migrations/
 
 Database migrations managed with Fizz.
+
+## deploy/
+
+All depolyment related artifacts are kept in this directory
