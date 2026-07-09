@@ -9,7 +9,8 @@ import (
 
 func New(cfg config.LoggerConfig) *slog.Logger {
 	opts := &slog.HandlerOptions{
-		Level: parseLevel(cfg.Level),
+		Level:     parseLevel(cfg.Level),
+		AddSource: cfg.Level == "debug",
 	}
 
 	handler := slog.NewJSONHandler(os.Stdout, opts)

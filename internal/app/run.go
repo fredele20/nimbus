@@ -29,6 +29,11 @@ func Run() error {
 		return err
 	}
 
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+
 	redisClient, err := cache.New(cfg.Redis, log)
 
 	server := httpserver.New(cfg.Server, log)
@@ -56,5 +61,19 @@ func Run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	return app.Server.Shutdown(ctx)
+	if err := app.Server.Shutdown(ctx); err != nil {
+		return err
+	}
+
+	if err := sqlDB.Close(); err != nil {
+		app.Logger.Warn("failed to close database", "error", err)
+	}
+
+	if err := app.Redis.Close(); err != nil {
+		app.Logger.Warn("failed to close redis", "error", err)
+	}
+
+	app.Logger.Info("application stopped")
+
+	return nil
 }
