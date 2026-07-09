@@ -24,10 +24,24 @@ down:
 logs:
 	docker compose logs -f
 
+.PHONY: migrate-create
+migrate-create:
+	migrate create -ext sql -dir migrations -seq $(name)
+
 .PHONY: migrate-up
 migrate-up:
-	soda migrate up
+	migrate -path migrations \
+		-database "postgres://postgres:postgres@localhost:5432/nimbus?sslmode=disable" \
+		up
 
 .PHONY: migrate-down
 migrate-down:
-	soda migrate down
+	migrate -path migrations \
+		-database "postgres://postgres:postgres@localhost:5432/nimbus?sslmode=disable" \
+		down 1
+
+.PHONY: migrate-version
+migrate-version:
+	migrate -path migrations \
+		-database "postgres://postgres:postgres@localhost:5432/nimbus?sslmode=disable" \
+		version
