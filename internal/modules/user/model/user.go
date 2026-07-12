@@ -19,7 +19,7 @@ type User struct {
 	FirstName       string    `gorm:"size:255;not null"`
 	LastName        string    `gorm:"size:255;not null"`
 	Email           string    `gorm:"size:255;uniqueIndex;not null"`
-	PasswordHash    string    `gorm:"not null"`
+	Password        string    `gorm:"not null"`
 	Status          Status    `gorm:"size:20;default:active"`
 	EmailVerifiedAt *time.Time
 	LastLoginAt     *time.Time

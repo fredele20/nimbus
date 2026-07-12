@@ -3,19 +3,28 @@ package config
 import "fmt"
 
 type Config struct {
+	App      AppConfig
 	Server   ServerConfig
 	Database DatabaseConfig
 	Redis    RedisConfig
 	Logger   LoggerConfig
+	JWT      JWTConfig
+}
+
+type AppConfig struct {
+	Port string
+	Host string
+	Log  LoggerConfig
+	Env  string
 }
 
 type ServerConfig struct {
 	Host string
-	Port int
+	Port string
 }
 
 func (s ServerConfig) Address() string {
-	return fmt.Sprintf("%s:%d", s.Host, s.Port)
+	return fmt.Sprintf("%s:%s", s.Host, s.Port)
 }
 
 type DatabaseConfig struct {
@@ -50,4 +59,8 @@ func (r RedisConfig) Address() string {
 
 type LoggerConfig struct {
 	Level string
+}
+
+type JWTConfig struct {
+	Secret string
 }

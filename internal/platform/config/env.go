@@ -3,6 +3,7 @@ package config
 const (
 	EnvAppHost = "APP_HOST"
 	EnvAppPort = "APP_PORT"
+	EnvApp     = "APP_ENV"
 
 	EnvDBHost     = "DB_HOST"
 	EnvDBPort     = "DB_PORT"
@@ -15,4 +16,6 @@ const (
 	EnvRedisPort = "REDIS_PORT"
 
 	EnvLogLevel = "LOG_LEVEL"
+
+	EnvJWTSecret = "JWT_SECRET"
 )
