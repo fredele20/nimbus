@@ -29,17 +29,18 @@ type Service interface {
 type service struct {
 	userRepo         userRepo.Repository
 	refreshTokenRepo authRepo.RefreshTokenRepository
-	token            *token.Manager
+	token            token.TokenManager
 }
 
 func New(
 	userRepo userRepo.Repository,
 	refreshTokenRepo authRepo.RefreshTokenRepository,
-	token *token.Manager,
+	token token.TokenManager,
 ) Service {
 	return &service{
-		userRepo: userRepo,
-		token:    token,
+		userRepo:         userRepo,
+		refreshTokenRepo: refreshTokenRepo,
+		token:            token,
 	}
 }
 

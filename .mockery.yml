@@ -1,0 +1,44 @@
+all: false
+generate: true
+force-file-write: true
+formatter: goimports
+log-level: info
+recursive: false
+template: testify
+
+packages:
+  github.com/fredele20/nimbus/internal/modules/user/repository:
+    config:
+      dir: mocks/user
+      pkgname: user_mocks
+      filename: "{{ .InterfaceName | snakecase }}.go"
+      structname: "Mock{{ .InterfaceName }}"
+    interfaces:
+      Repository:
+
+  github.com/fredele20/nimbus/internal/modules/auth/repository:
+    config:
+      dir: mocks/auth
+      pkgname: auth_mocks
+      filename: "{{ .InterfaceName | snakecase }}.go"
+      structname: "Mock{{ .InterfaceName }}"
+    interfaces:
+      RefreshTokenRepository:
+
+  github.com/fredele20/nimbus/internal/modules/auth/token:
+    config:
+      dir: mocks/auth
+      pkgname: auth_mocks
+      filename: "{{ .InterfaceName | snakecase }}.go"
+      structname: "Mock{{ .InterfaceName }}"
+    interfaces:
+      TokenManager:
+
+  github.com/fredele20/nimbus/internal/modules/auth/password:
+    config:
+      dir: mocks/auth
+      pkgname: auth_mocks
+      filename: "{{ .InterfaceName | snakecase }}.go"
+      structname: "Mock{{ .InterfaceName }}"
+    interfaces:
+      PasswordHasher:
