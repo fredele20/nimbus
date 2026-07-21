@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/fredele20/nimbus/internal/modules/auth/dto"
@@ -28,18 +29,22 @@ type Service interface {
 
 type service struct {
 	userRepo         userRepo.Repository
+	passwordHasher   password.PasswordHasher
 	refreshTokenRepo authRepo.RefreshTokenRepository
-	token            *token.Manager
+	token            token.TokenManager
 }
 
 func New(
 	userRepo userRepo.Repository,
+	passwordHasher password.PasswordHasher,
 	refreshTokenRepo authRepo.RefreshTokenRepository,
-	token *token.Manager,
+	token token.TokenManager,
 ) Service {
 	return &service{
-		userRepo: userRepo,
-		token:    token,
+		userRepo:         userRepo,
+		passwordHasher:   passwordHasher,
+		refreshTokenRepo: refreshTokenRepo,
+		token:            token,
 	}
 }
 
@@ -53,7 +58,7 @@ func (s *service) Register(ctx context.Context, req dto.RegisterRequest) (*dto.R
 		return nil, ErrEmailExists
 	}
 
-	hash, err := password.Hash(req.Password)
+	hash, err := s.passwordHasher.Hash(req.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +90,7 @@ func (s *service) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginRe
 		return nil, ErrInvalidCredentials
 	}
 
-	if err := password.Verify(user.Password, req.Password); err != nil {
+	if err := s.passwordHasher.Verify(user.Password, req.Password); err != nil {
 		return nil, ErrInvalidCredentials
 	}
 
@@ -94,12 +99,12 @@ func (s *service) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginRe
 		return nil, err
 	}
 
-	refreshToken, err := token.GenerateRefreshToken()
+	refreshToken, err := s.token.GenerateRefreshToken()
 	if err != nil {
 		return nil, err
 	}
 
-	tokenHash := token.HashRefreshToken(refreshToken)
+	tokenHash := s.token.HashRefreshToken(refreshToken)
 
 	err = s.refreshTokenRepo.Create(ctx, &authmodel.RefreshToken{
 		UserID:    user.ID.String(),
@@ -118,8 +123,7 @@ func (s *service) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginRe
 }
 
 func (s *service) Refresh(ctx context.Context, req dto.RefreshRequest) (*dto.RefreshResponse, error) {
-
-	tokenHash := token.HashRefreshToken(req.RefreshToken)
+	tokenHash := s.token.HashRefreshToken(req.RefreshToken)
 
 	stored, err := s.refreshTokenRepo.FindByTokenHash(ctx, tokenHash)
 	if err != nil {
@@ -129,22 +133,24 @@ func (s *service) Refresh(ctx context.Context, req dto.RefreshRequest) (*dto.Ref
 	if stored == nil {
 		return nil, ErrInvalidCredentials
 	}
+	fmt.Println("Got here")
 
 	if time.Now().After(stored.ExpiresAt) {
 		return nil, ErrInvalidCredentials
 	}
+
 
 	newAccessToken, err := s.token.GenerateAccessToken(stored.UserID)
 	if err != nil {
 		return nil, err
 	}
 
-	newRefreshToken, err := token.GenerateRefreshToken()
+	newRefreshToken, err := s.token.GenerateRefreshToken()
 	if err != nil {
 		return nil, err
 	}
 
-	newHash := token.HashRefreshToken(newRefreshToken)
+	newHash := s.token.HashRefreshToken(newRefreshToken)
 
 	stored.Token = newHash
 	stored.ExpiresAt = time.Now().Add(30 * 24 * time.Hour)
@@ -161,7 +167,7 @@ func (s *service) Refresh(ctx context.Context, req dto.RefreshRequest) (*dto.Ref
 
 func (s *service) Logout(ctx context.Context, refreshToken string) error {
 
-	hash := token.HashRefreshToken(refreshToken)
+	hash := s.token.HashRefreshToken(refreshToken)
 
 	stored, err := s.refreshTokenRepo.FindByTokenHash(ctx, hash)
 	if err != nil {

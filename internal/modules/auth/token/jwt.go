@@ -11,8 +11,15 @@ const (
 	AccessTokenTTL = 15 * time.Minute
 )
 
-type Manager struct {
+type manager struct {
 	secret []byte
+}
+
+type TokenManager interface {
+	GenerateAccessToken(userID string) (string, error)
+	Parse(tokenString string) (*Claims, error)
+	HashRefreshToken(token string) string
+	GenerateRefreshToken() (string, error)
 }
 
 type Claims struct {
@@ -20,11 +27,11 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func New(secret string) *Manager {
-	return &Manager{secret: []byte(secret)}
+func New(secret string) TokenManager {
+	return &manager{secret: []byte(secret)}
 }
 
-func (m *Manager) GenerateAccessToken(userID string) (string, error) {
+func (m *manager) GenerateAccessToken(userID string) (string, error) {
 	claims := Claims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -40,7 +47,7 @@ func (m *Manager) GenerateAccessToken(userID string) (string, error) {
 	return token.SignedString(m.secret)
 }
 
-func (m *Manager) Parse(tokenString string) (*Claims, error) {
+func (m *manager) Parse(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(t *jwt.Token) (any, error) {
 		return m.secret, nil
 	})
