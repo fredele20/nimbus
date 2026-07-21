@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 )
 
-func GenerateRefreshToken() (string, error) {
+func (m *manager) GenerateRefreshToken() (string, error) {
 	b := make([]byte, 32)
 
 	_, err := rand.Read(b)

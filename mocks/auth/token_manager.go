@@ -96,6 +96,110 @@ func (_c *MockTokenManager_GenerateAccessToken_Call) RunAndReturn(run func(userI
 	return _c
 }
 
+// GenerateRefreshToken provides a mock function for the type MockTokenManager
+func (_mock *MockTokenManager) GenerateRefreshToken() (string, error) {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GenerateRefreshToken")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func() (string, error)); ok {
+		return returnFunc()
+	}
+	if returnFunc, ok := ret.Get(0).(func() string); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func() error); ok {
+		r1 = returnFunc()
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockTokenManager_GenerateRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateRefreshToken'
+type MockTokenManager_GenerateRefreshToken_Call struct {
+	*mock.Call
+}
+
+// GenerateRefreshToken is a helper method to define mock.On call
+func (_e *MockTokenManager_Expecter) GenerateRefreshToken() *MockTokenManager_GenerateRefreshToken_Call {
+	return &MockTokenManager_GenerateRefreshToken_Call{Call: _e.mock.On("GenerateRefreshToken")}
+}
+
+func (_c *MockTokenManager_GenerateRefreshToken_Call) Run(run func()) *MockTokenManager_GenerateRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockTokenManager_GenerateRefreshToken_Call) Return(s string, err error) *MockTokenManager_GenerateRefreshToken_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *MockTokenManager_GenerateRefreshToken_Call) RunAndReturn(run func() (string, error)) *MockTokenManager_GenerateRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// HashRefreshToken provides a mock function for the type MockTokenManager
+func (_mock *MockTokenManager) HashRefreshToken(token string) string {
+	ret := _mock.Called(token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HashRefreshToken")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func(string) string); ok {
+		r0 = returnFunc(token)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
+}
+
+// MockTokenManager_HashRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HashRefreshToken'
+type MockTokenManager_HashRefreshToken_Call struct {
+	*mock.Call
+}
+
+// HashRefreshToken is a helper method to define mock.On call
+//   - token string
+func (_e *MockTokenManager_Expecter) HashRefreshToken(token any) *MockTokenManager_HashRefreshToken_Call {
+	return &MockTokenManager_HashRefreshToken_Call{Call: _e.mock.On("HashRefreshToken", token)}
+}
+
+func (_c *MockTokenManager_HashRefreshToken_Call) Run(run func(token string)) *MockTokenManager_HashRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockTokenManager_HashRefreshToken_Call) Return(s string) *MockTokenManager_HashRefreshToken_Call {
+	_c.Call.Return(s)
+	return _c
+}
+
+func (_c *MockTokenManager_HashRefreshToken_Call) RunAndReturn(run func(token string) string) *MockTokenManager_HashRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Parse provides a mock function for the type MockTokenManager
 func (_mock *MockTokenManager) Parse(tokenString string) (*token.Claims, error) {
 	ret := _mock.Called(tokenString)

@@ -18,6 +18,8 @@ type manager struct {
 type TokenManager interface {
 	GenerateAccessToken(userID string) (string, error)
 	Parse(tokenString string) (*Claims, error)
+	HashRefreshToken(token string) string
+	GenerateRefreshToken() (string, error)
 }
 
 type Claims struct {
