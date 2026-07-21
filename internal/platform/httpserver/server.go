@@ -2,12 +2,13 @@ package httpserver
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/fredele20/nimbus/internal/platform/config"
+	"github.com/fredele20/nimbus/internal/platform/logger"
+	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
@@ -15,23 +16,12 @@ type Server struct {
 	logger     *slog.Logger
 }
 
-func New(cfg config.ServerConfig, logger *slog.Logger) *Server {
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(fmt.Sprintf(
-			`{"status":"ok","service":"nimbus","version":"dev","timestamp":"%s"}`,
-			time.Now().UTC().Format(time.RFC3339),
-		)))
-	})
-
+func New(r *gin.Engine, cfg config.Config) *Server {
 	return &Server{
-		logger: logger,
+		logger: logger.New(cfg),
 		httpServer: &http.Server{
-			Addr:         cfg.Address(),
-			Handler:      mux,
+			Addr:         ":" + cfg.Server.Port,
+			Handler:      r,
 			ReadTimeout:  10 * time.Second,
 			WriteTimeout: 10 * time.Second,
 			IdleTimeout:  60 * time.Second,

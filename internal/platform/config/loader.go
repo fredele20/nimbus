@@ -26,9 +26,12 @@ func Load() (Config, error) {
 	setDefaults()
 
 	cfg := Config{
+		App: AppConfig{
+			Env: viper.GetString(EnvApp),
+		},
 		Server: ServerConfig{
 			Host: viper.GetString(EnvAppHost),
-			Port: viper.GetInt(EnvAppPort),
+			Port: viper.GetString(EnvAppPort),
 		},
 		Database: DatabaseConfig{
 			Host:     viper.GetString(EnvDBHost),
@@ -45,6 +48,9 @@ func Load() (Config, error) {
 		Logger: LoggerConfig{
 			Level: viper.GetString(EnvLogLevel),
 		},
+		JWT: JWTConfig{
+			Secret: viper.GetString(EnvJWTSecret),
+		},
 	}
 
 	if err := validate(cfg); err != nil {
@@ -56,7 +62,8 @@ func Load() (Config, error) {
 
 func setDefaults() {
 	viper.SetDefault(EnvAppHost, "0.0.0.0")
-	viper.SetDefault(EnvAppPort, 8080)
+	viper.SetDefault(EnvAppPort, "8080")
+	viper.SetDefault(EnvApp, "development")
 
 	viper.SetDefault(EnvDBHost, "localhost")
 	viper.SetDefault(EnvDBPort, 5432)
@@ -72,8 +79,8 @@ func setDefaults() {
 }
 
 func validate(cfg Config) error {
-	if cfg.Server.Port <= 0 {
-		return errors.New("server port must be greater than zero")
+	if cfg.Server.Port == "" {
+		return errors.New("server port is required")
 	}
 
 	if cfg.Database.Host == "" {
@@ -86,6 +93,10 @@ func validate(cfg Config) error {
 
 	if cfg.Redis.Host == "" {
 		return errors.New("redis host is required")
+	}
+
+	if cfg.JWT.Secret == "" {
+		return errors.New("jwt secret is required")
 	}
 
 	switch cfg.Logger.Level {
