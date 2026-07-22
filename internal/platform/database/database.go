@@ -10,6 +10,8 @@ import (
 	gormLogger "gorm.io/gorm/logger"
 )
 
+var DB *gorm.DB
+
 func New(cfg config.DatabaseConfig, log *slog.Logger) (*gorm.DB, error) {
 	opts := DefaultOptions()
 
@@ -30,6 +32,8 @@ func New(cfg config.DatabaseConfig, log *slog.Logger) (*gorm.DB, error) {
 	sqlDB.SetConnMaxLifetime(opts.ConnMaxLifetime)
 
 	log.Info("database connected")
+
+	DB = db
 
 	return db, nil
 }

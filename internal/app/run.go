@@ -10,11 +10,14 @@ import (
 	"time"
 
 	"github.com/fredele20/nimbus/internal/modules/auth"
-	"github.com/fredele20/nimbus/internal/modules/auth/handler"
+	authHandler "github.com/fredele20/nimbus/internal/modules/auth/handler"
+	userHandler "github.com/fredele20/nimbus/internal/modules/user/handler"
 	"github.com/fredele20/nimbus/internal/modules/auth/password"
 	authRepo "github.com/fredele20/nimbus/internal/modules/auth/repository"
-	"github.com/fredele20/nimbus/internal/modules/auth/service"
+	authService "github.com/fredele20/nimbus/internal/modules/auth/service"
+	userService "github.com/fredele20/nimbus/internal/modules/user/service"
 	"github.com/fredele20/nimbus/internal/modules/auth/token"
+	"github.com/fredele20/nimbus/internal/modules/user"
 	userRepo "github.com/fredele20/nimbus/internal/modules/user/repository"
 	"github.com/fredele20/nimbus/internal/platform/cache"
 	"github.com/fredele20/nimbus/internal/platform/config"
@@ -117,8 +120,12 @@ func registerRoutes(db *gorm.DB, r *gin.Engine) {
 	authRepo := authRepo.NewRefreshTokenRepository(db)
 	userRepo := userRepo.New(db)
 	passwordHasher := password.New()
-	service := service.New(userRepo, passwordHasher, authRepo, token.New(config.EnvJWTSecret))
-	handler := handler.New(service)
+	service := authService.New(userRepo, passwordHasher, authRepo, token.New(config.EnvJWTSecret))
+	handler := authHandler.New(service)
+
+	userService := userService.New(userRepo)
+	userHandler := userHandler.New(userService)
 
 	auth.RegisterRoutes(v1, handler)
+	user.RegisterRoutes(v1, userHandler)
 }
