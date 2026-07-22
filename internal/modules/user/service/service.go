@@ -2,7 +2,10 @@ package service
 
 import (
 	"context"
+	"log/slog"
 
+	"github.com/fredele20/nimbus/internal/modules/audit"
+	auditService "github.com/fredele20/nimbus/internal/modules/audit/service"
 	"github.com/fredele20/nimbus/internal/modules/user/dto"
 	"github.com/fredele20/nimbus/internal/modules/user/model"
 	"github.com/fredele20/nimbus/internal/modules/user/repository"
@@ -16,12 +19,20 @@ type Service interface {
 }
 
 type service struct {
-	repo repository.Repository
+	repo         repository.Repository
+	auditService auditService.Service
+	logger       *slog.Logger
 }
 
-func New(repo repository.Repository) Service {
+func New(
+	repo repository.Repository,
+	auditService auditService.Service,
+	logger *slog.Logger,
+) Service {
 	return &service{
-		repo: repo,
+		repo:         repo,
+		auditService: auditService,
+		logger:       logger,
 	}
 }
 
@@ -88,6 +99,15 @@ func (s *service) UpdateStatus(ctx context.Context, userID string, status model.
 	}
 
 	user.Status = status
+	action := getActionFromStatus(status)
+	if auditErr := s.auditService.Log(ctx, userID, userID, action, "user", userID, map[string]any{"user": user.Email}); auditErr != nil {
+		s.logger.Error(
+			"failed to write audit log",
+			"action", action,
+			"user_id", user.ID,
+			"error", err,
+		)
+	}
 
 	return s.repo.Update(ctx, user)
 }
@@ -101,4 +121,19 @@ func mapProfile(user *model.User) *dto.ProfileResponse {
 		Role:      string(user.Role),
 		Status:    string(user.Status),
 	}
+}
+
+func getActionFromStatus(status model.Status) string {
+	var action string
+	switch status {
+	case model.StatusActive:
+		action = audit.ActionUserActivated
+	case model.StatusSuspended:
+		action = audit.ActionUserSuspended
+	case model.StatusDeleted:
+		action = audit.ActionUserDeleted
+	default:
+		return ""
+	}
+	return action
 }

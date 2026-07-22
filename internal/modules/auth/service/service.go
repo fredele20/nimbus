@@ -3,9 +3,11 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
+	"log/slog"
 	"time"
 
+	"github.com/fredele20/nimbus/internal/modules/audit"
+	auditService "github.com/fredele20/nimbus/internal/modules/audit/service"
 	"github.com/fredele20/nimbus/internal/modules/auth/dto"
 	authmodel "github.com/fredele20/nimbus/internal/modules/auth/model"
 	"github.com/fredele20/nimbus/internal/modules/auth/password"
@@ -31,20 +33,26 @@ type service struct {
 	userRepo         userRepo.Repository
 	passwordHasher   password.PasswordHasher
 	refreshTokenRepo authRepo.RefreshTokenRepository
+	auditService     auditService.Service
 	token            token.TokenManager
+	logger           *slog.Logger
 }
 
 func New(
 	userRepo userRepo.Repository,
 	passwordHasher password.PasswordHasher,
 	refreshTokenRepo authRepo.RefreshTokenRepository,
+	auditService auditService.Service,
 	token token.TokenManager,
+	logger *slog.Logger,
 ) Service {
 	return &service{
 		userRepo:         userRepo,
 		passwordHasher:   passwordHasher,
 		refreshTokenRepo: refreshTokenRepo,
+		auditService:     auditService,
 		token:            token,
+		logger:           logger,
 	}
 }
 
@@ -75,8 +83,18 @@ func (s *service) Register(ctx context.Context, req dto.RegisterRequest) (*dto.R
 		return nil, err
 	}
 
+	userID := user.ID.String()
+	if auditErr := s.auditService.Log(ctx, userID, userID, audit.ActionUserCreated, "user", userID, map[string]any{"user": user.Email}); auditErr != nil {
+		s.logger.Error(
+			"failed to write audit log",
+			"action", audit.ActionUserCreated,
+			"user_id", user.ID,
+			"error", err,
+		)
+	}
+
 	return &dto.RegisterResponse{
-		ID: user.ID.String(),
+		ID: userID,
 	}, nil
 }
 
@@ -116,6 +134,16 @@ func (s *service) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginRe
 		return nil, err
 	}
 
+	userID := user.ID.String()
+	if auditErr := s.auditService.Log(ctx, userID, userID, audit.ActionUserLogin, "user", userID, map[string]any{"user": user.Email}); auditErr != nil {
+		s.logger.Error(
+			"failed to write audit log",
+			"action", audit.ActionUserLogin,
+			"user_id", user.ID,
+			"error", err,
+		)
+	}
+
 	return &dto.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
@@ -133,12 +161,10 @@ func (s *service) Refresh(ctx context.Context, req dto.RefreshRequest) (*dto.Ref
 	if stored == nil {
 		return nil, ErrInvalidCredentials
 	}
-	fmt.Println("Got here")
 
 	if time.Now().After(stored.ExpiresAt) {
 		return nil, ErrInvalidCredentials
 	}
-
 
 	newAccessToken, err := s.token.GenerateAccessToken(stored.UserID)
 	if err != nil {
