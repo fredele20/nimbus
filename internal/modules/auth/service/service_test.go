@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	userModel "github.com/fredele20/nimbus/internal/modules/user/model"
 
 	authModel "github.com/fredele20/nimbus/internal/modules/auth/model"
+	audit_mocks "github.com/fredele20/nimbus/mocks/audit"
 	auth_mocks "github.com/fredele20/nimbus/mocks/auth"
 	user_mocks "github.com/fredele20/nimbus/mocks/user"
 	"github.com/google/uuid"
@@ -27,6 +29,8 @@ type ServiceTestSuite struct {
 	passwordHasher *auth_mocks.MockPasswordHasher
 	refreshRepo    *auth_mocks.MockRefreshTokenRepository
 	tokenManager   *auth_mocks.MockTokenManager
+	auditService   *audit_mocks.MockService
+	logger         *slog.Logger
 }
 
 func (s *ServiceTestSuite) SetupTest() {
@@ -34,8 +38,10 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.passwordHasher = auth_mocks.NewMockPasswordHasher(s.T())
 	s.refreshRepo = auth_mocks.NewMockRefreshTokenRepository(s.T())
 	s.tokenManager = auth_mocks.NewMockTokenManager(s.T())
+	s.auditService = audit_mocks.NewMockService(s.T())
+	s.logger = &slog.Logger{}
 
-	s.service = service.New(s.userRepo, s.passwordHasher, s.refreshRepo, s.tokenManager)
+	s.service = service.New(s.userRepo, s.passwordHasher, s.refreshRepo, s.auditService, s.tokenManager, s.logger)
 }
 
 func TestServiceSuite(t *testing.T) {

@@ -12,13 +12,13 @@ func RegisterRoutes(r *gin.RouterGroup, handler *handler.Handler) {
 
 	auth := r.Group("/auth")
 	auth.POST("/register", handler.Register)
-	auth.POST("/login", handler.Register)
+	auth.POST("/login", handler.Login)
 
 	protectedRoute := r.Group("")
 	protectedRoute.Use(middleware.AuthMiddleware)
 
 	protectedRoute.POST("/refresh", handler.Refresh)
 	protectedRoute.POST("/logout", handler.Logout)
-	protectedRoute.GET("/me", handler.Me)
+	// protectedRoute.GET("/me", handler.Me)
 
 }

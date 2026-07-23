@@ -42,3 +42,12 @@ packages:
       structname: "Mock{{ .InterfaceName }}"
     interfaces:
       PasswordHasher:
+
+  github.com/fredele20/nimbus/internal/modules/audit/service:
+    config:
+      dir: mocks/audit
+      pkgname: audit_mocks
+      filename: "{{ .InterfaceName | snakecase }}.go"
+      structname: "Mock{{ .InterfaceName }}"
+    interfaces:
+      Service:

@@ -32,11 +32,6 @@ func (h *Handler) Register(c *gin.Context) {
 
 	res, err := h.service.Register(c.Request.Context(), req)
 	if err != nil {
-		if errors.Is(err, authservice.ErrEmailExists) {
-			response.JsonErrorResponse(c, err.Error())
-			return
-		}
-
 		response.JsonErrorResponse(c, err.Error())
 		return
 	}
@@ -54,11 +49,6 @@ func (h *Handler) Login(c *gin.Context) {
 
 	res, err := h.service.Login(c.Request.Context(), req)
 	if err != nil {
-		if errors.Is(err, authservice.ErrInvalidCredentials) {
-			// httperror.Handle(c, fmt.Errorf("%w: invalid email or password", httperror.ErrUnauthorized))
-			return
-		}
-
 		response.JsonErrorResponse(c, err.Error())
 		return
 	}

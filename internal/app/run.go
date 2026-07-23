@@ -3,19 +3,25 @@ package app
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	auditService "github.com/fredele20/nimbus/internal/modules/audit/service"
+	auditRepo "github.com/fredele20/nimbus/internal/modules/audit/repository"
 	"github.com/fredele20/nimbus/internal/modules/auth"
-	"github.com/fredele20/nimbus/internal/modules/auth/handler"
+	authHandler "github.com/fredele20/nimbus/internal/modules/auth/handler"
 	"github.com/fredele20/nimbus/internal/modules/auth/password"
 	authRepo "github.com/fredele20/nimbus/internal/modules/auth/repository"
-	"github.com/fredele20/nimbus/internal/modules/auth/service"
+	authService "github.com/fredele20/nimbus/internal/modules/auth/service"
 	"github.com/fredele20/nimbus/internal/modules/auth/token"
+	"github.com/fredele20/nimbus/internal/modules/user"
+	userHandler "github.com/fredele20/nimbus/internal/modules/user/handler"
 	userRepo "github.com/fredele20/nimbus/internal/modules/user/repository"
+	userService "github.com/fredele20/nimbus/internal/modules/user/service"
 	"github.com/fredele20/nimbus/internal/platform/cache"
 	"github.com/fredele20/nimbus/internal/platform/config"
 	"github.com/fredele20/nimbus/internal/platform/database"
@@ -31,9 +37,9 @@ func Run() error {
 		return err
 	}
 
-	log := logger.New(cfg)
+	logger := logger.New(cfg)
 
-	db, err := database.New(cfg.Database, log)
+	db, err := database.New(cfg.Database, logger)
 	if err != nil {
 		return err
 	}
@@ -43,17 +49,17 @@ func Run() error {
 		return err
 	}
 
-	redisClient, err := cache.New(cfg.Redis, log)
+	redisClient, err := cache.New(cfg.Redis, logger)
 
 	r := gin.New()
 	r.Use(gin.Logger())
-	registerRoutes(db, r)
+	registerRoutes(db, logger, r)
 
 	server := httpserver.New(r, cfg)
 
 	app := &App{
 		Config: &cfg,
-		Logger: log,
+		Logger: logger,
 		DB:     db,
 		Redis:  redisClient,
 		Server: server,
@@ -91,7 +97,7 @@ func Run() error {
 	return nil
 }
 
-func registerRoutes(db *gorm.DB, r *gin.Engine) {
+func registerRoutes(db *gorm.DB, logger *slog.Logger, r *gin.Engine) {
 	r.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"status":      http.StatusOK,
@@ -117,8 +123,14 @@ func registerRoutes(db *gorm.DB, r *gin.Engine) {
 	authRepo := authRepo.NewRefreshTokenRepository(db)
 	userRepo := userRepo.New(db)
 	passwordHasher := password.New()
-	service := service.New(userRepo, passwordHasher, authRepo, token.New(config.EnvJWTSecret))
-	handler := handler.New(service)
+	auditRepo := auditRepo.New(db)
+	auditService := auditService.New(auditRepo)
+	service := authService.New(userRepo, passwordHasher, authRepo, auditService, token.New(config.EnvJWTSecret), logger)
+	handler := authHandler.New(service)
+
+	userService := userService.New(userRepo, auditService, logger)
+	userHandler := userHandler.New(userService)
 
 	auth.RegisterRoutes(v1, handler)
+	user.RegisterRoutes(v1, userHandler)
 }
