@@ -10,18 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	auditService "github.com/fredele20/nimbus/internal/modules/audit/service"
-	auditRepo "github.com/fredele20/nimbus/internal/modules/audit/repository"
+	"github.com/fredele20/nimbus/internal/base"
 	"github.com/fredele20/nimbus/internal/modules/auth"
-	authHandler "github.com/fredele20/nimbus/internal/modules/auth/handler"
-	"github.com/fredele20/nimbus/internal/modules/auth/password"
-	authRepo "github.com/fredele20/nimbus/internal/modules/auth/repository"
-	authService "github.com/fredele20/nimbus/internal/modules/auth/service"
-	"github.com/fredele20/nimbus/internal/modules/auth/token"
 	"github.com/fredele20/nimbus/internal/modules/user"
-	userHandler "github.com/fredele20/nimbus/internal/modules/user/handler"
-	userRepo "github.com/fredele20/nimbus/internal/modules/user/repository"
-	userService "github.com/fredele20/nimbus/internal/modules/user/service"
 	"github.com/fredele20/nimbus/internal/platform/cache"
 	"github.com/fredele20/nimbus/internal/platform/config"
 	"github.com/fredele20/nimbus/internal/platform/database"
@@ -53,7 +44,7 @@ func Run() error {
 
 	r := gin.New()
 	r.Use(gin.Logger())
-	registerRoutes(db, logger, r)
+	registerRoutes(db, logger, cfg, r)
 
 	server := httpserver.New(r, cfg)
 
@@ -97,7 +88,7 @@ func Run() error {
 	return nil
 }
 
-func registerRoutes(db *gorm.DB, logger *slog.Logger, r *gin.Engine) {
+func registerRoutes(db *gorm.DB, logger *slog.Logger, conf config.Config, r *gin.Engine) {
 	r.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"status":      http.StatusOK,
@@ -118,19 +109,11 @@ func registerRoutes(db *gorm.DB, logger *slog.Logger, r *gin.Engine) {
 			"timestamp":   time.Now().UTC().Format(time.RFC3339),
 		})
 	})
-	
+
 	v1 := r.Group("/api/v1")
-	authRepo := authRepo.NewRefreshTokenRepository(db)
-	userRepo := userRepo.New(db)
-	passwordHasher := password.New()
-	auditRepo := auditRepo.New(db)
-	auditService := auditService.New(auditRepo)
-	service := authService.New(userRepo, passwordHasher, authRepo, auditService, token.New(config.EnvJWTSecret), logger)
-	handler := authHandler.New(service)
 
-	userService := userService.New(userRepo, auditService, logger)
-	userHandler := userHandler.New(userService)
+	appBase := base.New(db, logger, conf).LoadController()
 
-	auth.RegisterRoutes(v1, handler)
-	user.RegisterRoutes(v1, userHandler)
+	auth.RegisterRoutes(v1, appBase.AuthC)
+	user.RegisterRoutes(v1, appBase.UserC)
 }
