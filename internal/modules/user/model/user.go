@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	"github.com/fredele20/nimbus/internal/platform/database"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -23,18 +24,15 @@ const (
 )
 
 type User struct {
-	ID              uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	FirstName       string    `gorm:"size:255;not null"`
-	LastName        string    `gorm:"size:255;not null"`
-	Email           string    `gorm:"size:255;uniqueIndex;not null"`
-	Password        string    `gorm:"not null"`
-	Role            Role      `gorm:"size:50;not null;default:customer"`
-	Status          Status    `gorm:"size:20;default:active"`
-	EmailVerifiedAt *time.Time
-	LastLoginAt     *time.Time
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	DeletedAt       gorm.DeletedAt
+	database.BaseModel
+	FirstName       string     `gorm:"size:255;not null" json:"first_name"`
+	LastName        string     `gorm:"size:255;not null" json:"last_name"`
+	Email           string     `gorm:"size:255;uniqueIndex;not null" json:"email"`
+	Password        string     `gorm:"not null" json:"password"`
+	Role            Role       `gorm:"size:50;not null;default:customer" json:"role"`
+	Status          Status     `gorm:"size:20;default:active" json:"status"`
+	EmailVerifiedAt *time.Time `gorm:"type:TIMESTAMP" json:"email_verified_at"`
+	LastLoginAt     *time.Time `gorm:"type:TIMESTAMP" json:"last_login_at"`
 }
 
 func (u *User) BeforeCreate(_ *gorm.DB) error {

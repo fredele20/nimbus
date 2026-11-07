@@ -57,15 +57,6 @@ func New(
 }
 
 func (s *service) Register(ctx context.Context, req dto.RegisterRequest) (*dto.RegisterResponse, error) {
-	existing, err := s.userRepo.FindByEmail(ctx, req.Email)
-	if err != nil {
-		return nil, err
-	}
-
-	if existing != nil {
-		return nil, ErrEmailExists
-	}
-
 	hash, err := s.passwordHasher.Hash(req.Password)
 	if err != nil {
 		return nil, err
@@ -101,10 +92,6 @@ func (s *service) Register(ctx context.Context, req dto.RegisterRequest) (*dto.R
 func (s *service) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error) {
 	user, err := s.userRepo.FindByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, err
-	}
-
-	if user == nil {
 		return nil, ErrInvalidCredentials
 	}
 
@@ -125,7 +112,7 @@ func (s *service) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginRe
 	tokenHash := s.token.HashRefreshToken(refreshToken)
 
 	err = s.refreshTokenRepo.Create(ctx, &authmodel.RefreshToken{
-		UserID:    user.ID.String(),
+		UserID:    user.ID,
 		Token:     tokenHash,
 		ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
 	})
@@ -153,12 +140,8 @@ func (s *service) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginRe
 func (s *service) Refresh(ctx context.Context, req dto.RefreshRequest) (*dto.RefreshResponse, error) {
 	tokenHash := s.token.HashRefreshToken(req.RefreshToken)
 
-	stored, err := s.refreshTokenRepo.FindByTokenHash(ctx, tokenHash)
+	stored, err := s.refreshTokenRepo.FindByToken(ctx, tokenHash)
 	if err != nil {
-		return nil, err
-	}
-
-	if stored == nil {
 		return nil, ErrInvalidCredentials
 	}
 
@@ -166,7 +149,7 @@ func (s *service) Refresh(ctx context.Context, req dto.RefreshRequest) (*dto.Ref
 		return nil, ErrInvalidCredentials
 	}
 
-	newAccessToken, err := s.token.GenerateAccessToken(stored.UserID)
+	newAccessToken, err := s.token.GenerateAccessToken(stored.UserID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +164,7 @@ func (s *service) Refresh(ctx context.Context, req dto.RefreshRequest) (*dto.Ref
 	stored.Token = newHash
 	stored.ExpiresAt = time.Now().Add(30 * 24 * time.Hour)
 
-	if err := s.refreshTokenRepo.Update(ctx, stored); err != nil {
+	if err := s.refreshTokenRepo.UpdateOne(ctx, &stored); err != nil {
 		return nil, err
 	}
 
@@ -195,14 +178,10 @@ func (s *service) Logout(ctx context.Context, refreshToken string) error {
 
 	hash := s.token.HashRefreshToken(refreshToken)
 
-	stored, err := s.refreshTokenRepo.FindByTokenHash(ctx, hash)
+	stored, err := s.refreshTokenRepo.FindByToken(ctx, hash)
 	if err != nil {
 		return err
 	}
 
-	if stored == nil {
-		return nil
-	}
-
-	return s.refreshTokenRepo.Delete(ctx, stored.ID)
+	return s.refreshTokenRepo.DeleteOneById(ctx, stored.ID)
 }

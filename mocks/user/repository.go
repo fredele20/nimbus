@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/fredele20/nimbus/internal/modules/user/model"
+	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -158,24 +159,22 @@ func (_c *MockRepository_FindAll_Call) RunAndReturn(run func(ctx context.Context
 }
 
 // FindByEmail provides a mock function for the type MockRepository
-func (_mock *MockRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
+func (_mock *MockRepository) FindByEmail(ctx context.Context, email string) (model.User, error) {
 	ret := _mock.Called(ctx, email)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindByEmail")
 	}
 
-	var r0 *model.User
+	var r0 model.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.User, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (model.User, error)); ok {
 		return returnFunc(ctx, email)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.User); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) model.User); ok {
 		r0 = returnFunc(ctx, email)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.User)
-		}
+		r0 = ret.Get(0).(model.User)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = returnFunc(ctx, email)
@@ -215,37 +214,35 @@ func (_c *MockRepository_FindByEmail_Call) Run(run func(ctx context.Context, ema
 	return _c
 }
 
-func (_c *MockRepository_FindByEmail_Call) Return(user *model.User, err error) *MockRepository_FindByEmail_Call {
+func (_c *MockRepository_FindByEmail_Call) Return(user model.User, err error) *MockRepository_FindByEmail_Call {
 	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *MockRepository_FindByEmail_Call) RunAndReturn(run func(ctx context.Context, email string) (*model.User, error)) *MockRepository_FindByEmail_Call {
+func (_c *MockRepository_FindByEmail_Call) RunAndReturn(run func(ctx context.Context, email string) (model.User, error)) *MockRepository_FindByEmail_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// FindByID provides a mock function for the type MockRepository
-func (_mock *MockRepository) FindByID(ctx context.Context, id string) (*model.User, error) {
+// FindOneByID provides a mock function for the type MockRepository
+func (_mock *MockRepository) FindOneByID(ctx context.Context, id uuid.UUID) (model.User, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindByID")
+		panic("no return value specified for FindOneByID")
 	}
 
-	var r0 *model.User
+	var r0 model.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.User, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (model.User, error)); ok {
 		return returnFunc(ctx, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.User); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) model.User); ok {
 		r0 = returnFunc(ctx, id)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.User)
-		}
+		r0 = ret.Get(0).(model.User)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
 		r1 = returnFunc(ctx, id)
 	} else {
 		r1 = ret.Error(1)
@@ -253,27 +250,27 @@ func (_mock *MockRepository) FindByID(ctx context.Context, id string) (*model.Us
 	return r0, r1
 }
 
-// MockRepository_FindByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByID'
-type MockRepository_FindByID_Call struct {
+// MockRepository_FindOneByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindOneByID'
+type MockRepository_FindOneByID_Call struct {
 	*mock.Call
 }
 
-// FindByID is a helper method to define mock.On call
+// FindOneByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id string
-func (_e *MockRepository_Expecter) FindByID(ctx any, id any) *MockRepository_FindByID_Call {
-	return &MockRepository_FindByID_Call{Call: _e.mock.On("FindByID", ctx, id)}
+//   - id uuid.UUID
+func (_e *MockRepository_Expecter) FindOneByID(ctx any, id any) *MockRepository_FindOneByID_Call {
+	return &MockRepository_FindOneByID_Call{Call: _e.mock.On("FindOneByID", ctx, id)}
 }
 
-func (_c *MockRepository_FindByID_Call) Run(run func(ctx context.Context, id string)) *MockRepository_FindByID_Call {
+func (_c *MockRepository_FindOneByID_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockRepository_FindOneByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 uuid.UUID
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].(uuid.UUID)
 		}
 		run(
 			arg0,
@@ -283,12 +280,12 @@ func (_c *MockRepository_FindByID_Call) Run(run func(ctx context.Context, id str
 	return _c
 }
 
-func (_c *MockRepository_FindByID_Call) Return(user *model.User, err error) *MockRepository_FindByID_Call {
+func (_c *MockRepository_FindOneByID_Call) Return(user model.User, err error) *MockRepository_FindOneByID_Call {
 	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *MockRepository_FindByID_Call) RunAndReturn(run func(ctx context.Context, id string) (*model.User, error)) *MockRepository_FindByID_Call {
+func (_c *MockRepository_FindOneByID_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (model.User, error)) *MockRepository_FindOneByID_Call {
 	_c.Call.Return(run)
 	return _c
 }

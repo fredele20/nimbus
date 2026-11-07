@@ -7,16 +7,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.RouterGroup, controller controller.ControllerInterface) {
+func RegisterRoutes(router *gin.RouterGroup, controller controller.ControllerInterface, jwtSecret string) {
 	authUser := router.Group("")
-	authUser.Use(authmiddleware.AuthMiddleware)
+	authUser.Use(authmiddleware.AuthMiddleware(jwtSecret))
 
 	authUser.GET("/me", controller.GetProfile)
 	authUser.PATCH("/me", controller.UpdateProfile)
 
 	admin := router.Group("/admin")
 
-	admin.Use(authmiddleware.AuthMiddleware, authmiddleware.RequireRole(string(model.Admin)))
+	admin.Use(authmiddleware.AuthMiddleware(jwtSecret), authmiddleware.RequireRole(string(model.Admin)))
 
 	admin.GET("/users", controller.ListUsers)
 

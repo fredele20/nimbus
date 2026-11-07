@@ -9,13 +9,14 @@ import (
 	"github.com/fredele20/nimbus/internal/modules/user/dto"
 	"github.com/fredele20/nimbus/internal/modules/user/model"
 	"github.com/fredele20/nimbus/internal/modules/user/repository"
+	"github.com/google/uuid"
 )
 
 type Service interface {
-	GetProfile(ctx context.Context, userID string) (*dto.ProfileResponse, error)
-	UpdateProfile(ctx context.Context, userID string, req dto.UpdateProfileRequest) error
+	GetProfile(ctx context.Context, userID uuid.UUID) (*dto.ProfileResponse, error)
+	UpdateProfile(ctx context.Context, userID uuid.UUID, req dto.UpdateProfileRequest) error
 	ListUsers(ctx context.Context) ([]dto.ProfileResponse, error)
-	UpdateStatus(ctx context.Context, userID string, status model.Status) error
+	UpdateStatus(ctx context.Context, userID uuid.UUID, status model.Status) error
 }
 
 type service struct {
@@ -36,33 +37,25 @@ func New(
 	}
 }
 
-func (s *service) GetProfile(ctx context.Context, userID string) (*dto.ProfileResponse, error) {
-	user, err := s.repo.FindByID(ctx, userID)
+func (s *service) GetProfile(ctx context.Context, userID uuid.UUID) (*dto.ProfileResponse, error) {
+	user, err := s.repo.FindOneByID(ctx, userID)
 	if err != nil {
-		return nil, err
-	}
-
-	if user == nil {
 		return nil, ErrUserNotFound
 	}
 
 	return mapProfile(user), nil
 }
 
-func (s *service) UpdateProfile(ctx context.Context, userID string, req dto.UpdateProfileRequest) error {
-	user, err := s.repo.FindByID(ctx, userID)
+func (s *service) UpdateProfile(ctx context.Context, userID uuid.UUID, req dto.UpdateProfileRequest) error {
+	user, err := s.repo.FindOneByID(ctx, userID)
 	if err != nil {
-		return err
-	}
-
-	if user == nil {
 		return ErrUserNotFound
 	}
 
 	user.FirstName = req.FirstName
 	user.LastName = req.LastName
 
-	return s.repo.Update(ctx, user)
+	return s.repo.Update(ctx, &user)
 }
 
 func (s *service) ListUsers(ctx context.Context) ([]dto.ProfileResponse, error) {
@@ -74,13 +67,13 @@ func (s *service) ListUsers(ctx context.Context) ([]dto.ProfileResponse, error) 
 	responses := make([]dto.ProfileResponse, 0, len(users))
 
 	for _, user := range users {
-		responses = append(responses, *mapProfile(&user))
+		responses = append(responses, *mapProfile(user))
 	}
 
 	return responses, nil
 }
 
-func (s *service) UpdateStatus(ctx context.Context, userID string, status model.Status) error {
+func (s *service) UpdateStatus(ctx context.Context, userID uuid.UUID, status model.Status) error {
 	switch status {
 	case model.StatusActive,
 		model.StatusSuspended,
@@ -89,18 +82,15 @@ func (s *service) UpdateStatus(ctx context.Context, userID string, status model.
 		return ErrInvalidStatus
 	}
 
-	user, err := s.repo.FindByID(ctx, userID)
+	user, err := s.repo.FindOneByID(ctx, userID)
 	if err != nil {
-		return err
-	}
-
-	if user == nil {
 		return ErrUserNotFound
 	}
 
 	user.Status = status
+	uid := userID.String()
 	action := getActionFromStatus(status)
-	if auditErr := s.auditService.Log(ctx, userID, userID, action, "user", userID, map[string]any{"user": user.Email}); auditErr != nil {
+	if auditErr := s.auditService.Log(ctx, uid, uid, action, "user", uid, map[string]any{"user": user.Email}); auditErr != nil {
 		s.logger.Error(
 			"failed to write audit log",
 			"action", action,
@@ -109,10 +99,10 @@ func (s *service) UpdateStatus(ctx context.Context, userID string, status model.
 		)
 	}
 
-	return s.repo.Update(ctx, user)
+	return s.repo.Update(ctx, &user)
 }
 
-func mapProfile(user *model.User) *dto.ProfileResponse {
+func mapProfile(user model.User) *dto.ProfileResponse {
 	return &dto.ProfileResponse{
 		ID:        user.ID.String(),
 		FirstName: user.FirstName,

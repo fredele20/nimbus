@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/fredele20/nimbus/internal/modules/auth/model"
+	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -95,16 +96,16 @@ func (_c *MockRefreshTokenRepository_Create_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
-// Delete provides a mock function for the type MockRefreshTokenRepository
-func (_mock *MockRefreshTokenRepository) Delete(ctx context.Context, id string) error {
+// DeleteOneById provides a mock function for the type MockRefreshTokenRepository
+func (_mock *MockRefreshTokenRepository) DeleteOneById(ctx context.Context, id uuid.UUID) error {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Delete")
+		panic("no return value specified for DeleteOneById")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
 		r0 = returnFunc(ctx, id)
 	} else {
 		r0 = ret.Error(0)
@@ -112,27 +113,27 @@ func (_mock *MockRefreshTokenRepository) Delete(ctx context.Context, id string) 
 	return r0
 }
 
-// MockRefreshTokenRepository_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
-type MockRefreshTokenRepository_Delete_Call struct {
+// MockRefreshTokenRepository_DeleteOneById_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteOneById'
+type MockRefreshTokenRepository_DeleteOneById_Call struct {
 	*mock.Call
 }
 
-// Delete is a helper method to define mock.On call
+// DeleteOneById is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id string
-func (_e *MockRefreshTokenRepository_Expecter) Delete(ctx any, id any) *MockRefreshTokenRepository_Delete_Call {
-	return &MockRefreshTokenRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, id)}
+//   - id uuid.UUID
+func (_e *MockRefreshTokenRepository_Expecter) DeleteOneById(ctx any, id any) *MockRefreshTokenRepository_DeleteOneById_Call {
+	return &MockRefreshTokenRepository_DeleteOneById_Call{Call: _e.mock.On("DeleteOneById", ctx, id)}
 }
 
-func (_c *MockRefreshTokenRepository_Delete_Call) Run(run func(ctx context.Context, id string)) *MockRefreshTokenRepository_Delete_Call {
+func (_c *MockRefreshTokenRepository_DeleteOneById_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockRefreshTokenRepository_DeleteOneById_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 uuid.UUID
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].(uuid.UUID)
 		}
 		run(
 			arg0,
@@ -142,160 +143,33 @@ func (_c *MockRefreshTokenRepository_Delete_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockRefreshTokenRepository_Delete_Call) Return(err error) *MockRefreshTokenRepository_Delete_Call {
+func (_c *MockRefreshTokenRepository_DeleteOneById_Call) Return(err error) *MockRefreshTokenRepository_DeleteOneById_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockRefreshTokenRepository_Delete_Call) RunAndReturn(run func(ctx context.Context, id string) error) *MockRefreshTokenRepository_Delete_Call {
+func (_c *MockRefreshTokenRepository_DeleteOneById_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) error) *MockRefreshTokenRepository_DeleteOneById_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteByUserID provides a mock function for the type MockRefreshTokenRepository
-func (_mock *MockRefreshTokenRepository) DeleteByUserID(ctx context.Context, userID string) error {
-	ret := _mock.Called(ctx, userID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteByUserID")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, userID)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockRefreshTokenRepository_DeleteByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteByUserID'
-type MockRefreshTokenRepository_DeleteByUserID_Call struct {
-	*mock.Call
-}
-
-// DeleteByUserID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - userID string
-func (_e *MockRefreshTokenRepository_Expecter) DeleteByUserID(ctx any, userID any) *MockRefreshTokenRepository_DeleteByUserID_Call {
-	return &MockRefreshTokenRepository_DeleteByUserID_Call{Call: _e.mock.On("DeleteByUserID", ctx, userID)}
-}
-
-func (_c *MockRefreshTokenRepository_DeleteByUserID_Call) Run(run func(ctx context.Context, userID string)) *MockRefreshTokenRepository_DeleteByUserID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockRefreshTokenRepository_DeleteByUserID_Call) Return(err error) *MockRefreshTokenRepository_DeleteByUserID_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockRefreshTokenRepository_DeleteByUserID_Call) RunAndReturn(run func(ctx context.Context, userID string) error) *MockRefreshTokenRepository_DeleteByUserID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// FindByID provides a mock function for the type MockRefreshTokenRepository
-func (_mock *MockRefreshTokenRepository) FindByID(ctx context.Context, id string) (*model.RefreshToken, error) {
-	ret := _mock.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for FindByID")
-	}
-
-	var r0 *model.RefreshToken
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.RefreshToken, error)); ok {
-		return returnFunc(ctx, id)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.RefreshToken); ok {
-		r0 = returnFunc(ctx, id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.RefreshToken)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockRefreshTokenRepository_FindByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByID'
-type MockRefreshTokenRepository_FindByID_Call struct {
-	*mock.Call
-}
-
-// FindByID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-func (_e *MockRefreshTokenRepository_Expecter) FindByID(ctx any, id any) *MockRefreshTokenRepository_FindByID_Call {
-	return &MockRefreshTokenRepository_FindByID_Call{Call: _e.mock.On("FindByID", ctx, id)}
-}
-
-func (_c *MockRefreshTokenRepository_FindByID_Call) Run(run func(ctx context.Context, id string)) *MockRefreshTokenRepository_FindByID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockRefreshTokenRepository_FindByID_Call) Return(refreshToken *model.RefreshToken, err error) *MockRefreshTokenRepository_FindByID_Call {
-	_c.Call.Return(refreshToken, err)
-	return _c
-}
-
-func (_c *MockRefreshTokenRepository_FindByID_Call) RunAndReturn(run func(ctx context.Context, id string) (*model.RefreshToken, error)) *MockRefreshTokenRepository_FindByID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// FindByTokenHash provides a mock function for the type MockRefreshTokenRepository
-func (_mock *MockRefreshTokenRepository) FindByTokenHash(ctx context.Context, tokenHash string) (*model.RefreshToken, error) {
+// FindByToken provides a mock function for the type MockRefreshTokenRepository
+func (_mock *MockRefreshTokenRepository) FindByToken(ctx context.Context, tokenHash string) (model.RefreshToken, error) {
 	ret := _mock.Called(ctx, tokenHash)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindByTokenHash")
+		panic("no return value specified for FindByToken")
 	}
 
-	var r0 *model.RefreshToken
+	var r0 model.RefreshToken
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*model.RefreshToken, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (model.RefreshToken, error)); ok {
 		return returnFunc(ctx, tokenHash)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *model.RefreshToken); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) model.RefreshToken); ok {
 		r0 = returnFunc(ctx, tokenHash)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.RefreshToken)
-		}
+		r0 = ret.Get(0).(model.RefreshToken)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = returnFunc(ctx, tokenHash)
@@ -305,19 +179,19 @@ func (_mock *MockRefreshTokenRepository) FindByTokenHash(ctx context.Context, to
 	return r0, r1
 }
 
-// MockRefreshTokenRepository_FindByTokenHash_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByTokenHash'
-type MockRefreshTokenRepository_FindByTokenHash_Call struct {
+// MockRefreshTokenRepository_FindByToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByToken'
+type MockRefreshTokenRepository_FindByToken_Call struct {
 	*mock.Call
 }
 
-// FindByTokenHash is a helper method to define mock.On call
+// FindByToken is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tokenHash string
-func (_e *MockRefreshTokenRepository_Expecter) FindByTokenHash(ctx any, tokenHash any) *MockRefreshTokenRepository_FindByTokenHash_Call {
-	return &MockRefreshTokenRepository_FindByTokenHash_Call{Call: _e.mock.On("FindByTokenHash", ctx, tokenHash)}
+func (_e *MockRefreshTokenRepository_Expecter) FindByToken(ctx any, tokenHash any) *MockRefreshTokenRepository_FindByToken_Call {
+	return &MockRefreshTokenRepository_FindByToken_Call{Call: _e.mock.On("FindByToken", ctx, tokenHash)}
 }
 
-func (_c *MockRefreshTokenRepository_FindByTokenHash_Call) Run(run func(ctx context.Context, tokenHash string)) *MockRefreshTokenRepository_FindByTokenHash_Call {
+func (_c *MockRefreshTokenRepository_FindByToken_Call) Run(run func(ctx context.Context, tokenHash string)) *MockRefreshTokenRepository_FindByToken_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -335,22 +209,22 @@ func (_c *MockRefreshTokenRepository_FindByTokenHash_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockRefreshTokenRepository_FindByTokenHash_Call) Return(refreshToken *model.RefreshToken, err error) *MockRefreshTokenRepository_FindByTokenHash_Call {
+func (_c *MockRefreshTokenRepository_FindByToken_Call) Return(refreshToken model.RefreshToken, err error) *MockRefreshTokenRepository_FindByToken_Call {
 	_c.Call.Return(refreshToken, err)
 	return _c
 }
 
-func (_c *MockRefreshTokenRepository_FindByTokenHash_Call) RunAndReturn(run func(ctx context.Context, tokenHash string) (*model.RefreshToken, error)) *MockRefreshTokenRepository_FindByTokenHash_Call {
+func (_c *MockRefreshTokenRepository_FindByToken_Call) RunAndReturn(run func(ctx context.Context, tokenHash string) (model.RefreshToken, error)) *MockRefreshTokenRepository_FindByToken_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// Update provides a mock function for the type MockRefreshTokenRepository
-func (_mock *MockRefreshTokenRepository) Update(ctx context.Context, token *model.RefreshToken) error {
+// UpdateOne provides a mock function for the type MockRefreshTokenRepository
+func (_mock *MockRefreshTokenRepository) UpdateOne(ctx context.Context, token *model.RefreshToken) error {
 	ret := _mock.Called(ctx, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Update")
+		panic("no return value specified for UpdateOne")
 	}
 
 	var r0 error
@@ -362,19 +236,19 @@ func (_mock *MockRefreshTokenRepository) Update(ctx context.Context, token *mode
 	return r0
 }
 
-// MockRefreshTokenRepository_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
-type MockRefreshTokenRepository_Update_Call struct {
+// MockRefreshTokenRepository_UpdateOne_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateOne'
+type MockRefreshTokenRepository_UpdateOne_Call struct {
 	*mock.Call
 }
 
-// Update is a helper method to define mock.On call
+// UpdateOne is a helper method to define mock.On call
 //   - ctx context.Context
 //   - token *model.RefreshToken
-func (_e *MockRefreshTokenRepository_Expecter) Update(ctx any, token any) *MockRefreshTokenRepository_Update_Call {
-	return &MockRefreshTokenRepository_Update_Call{Call: _e.mock.On("Update", ctx, token)}
+func (_e *MockRefreshTokenRepository_Expecter) UpdateOne(ctx any, token any) *MockRefreshTokenRepository_UpdateOne_Call {
+	return &MockRefreshTokenRepository_UpdateOne_Call{Call: _e.mock.On("UpdateOne", ctx, token)}
 }
 
-func (_c *MockRefreshTokenRepository_Update_Call) Run(run func(ctx context.Context, token *model.RefreshToken)) *MockRefreshTokenRepository_Update_Call {
+func (_c *MockRefreshTokenRepository_UpdateOne_Call) Run(run func(ctx context.Context, token *model.RefreshToken)) *MockRefreshTokenRepository_UpdateOne_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -392,12 +266,12 @@ func (_c *MockRefreshTokenRepository_Update_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockRefreshTokenRepository_Update_Call) Return(err error) *MockRefreshTokenRepository_Update_Call {
+func (_c *MockRefreshTokenRepository_UpdateOne_Call) Return(err error) *MockRefreshTokenRepository_UpdateOne_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockRefreshTokenRepository_Update_Call) RunAndReturn(run func(ctx context.Context, token *model.RefreshToken) error) *MockRefreshTokenRepository_Update_Call {
+func (_c *MockRefreshTokenRepository_UpdateOne_Call) RunAndReturn(run func(ctx context.Context, token *model.RefreshToken) error) *MockRefreshTokenRepository_UpdateOne_Call {
 	_c.Call.Return(run)
 	return _c
 }

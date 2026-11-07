@@ -7,6 +7,8 @@ import (
 	"github.com/fredele20/nimbus/internal/modules/user/dto"
 	"github.com/fredele20/nimbus/internal/modules/user/model"
 	"github.com/fredele20/nimbus/internal/modules/user/service"
+	"github.com/fredele20/nimbus/internal/shared/http/response"
+	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +39,7 @@ func (c *controller) GetProfile(ctx *gin.Context) {
 		return
 	}
 
-	res, err := c.service.GetProfile(ctx.Request.Context(), user.ID.String())
+	res, err := c.service.GetProfile(ctx.Request.Context(), user.ID)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -66,7 +68,7 @@ func (c *controller) UpdateProfile(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.service.UpdateProfile(ctx.Request.Context(), user.ID.String(), req); err != nil {
+	if err := c.service.UpdateProfile(ctx.Request.Context(), user.ID, req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -89,7 +91,13 @@ func (c *controller) ListUsers(ctx *gin.Context) {
 }
 
 func (c *controller) UpdateStatus(ctx *gin.Context) {
-	id := ctx.Param("id")
+	uid := ctx.Param("id")
+
+	userId, idErr := uuid.Parse(uid)
+	if idErr != nil {
+		response.JsonErrorResponse(ctx, "invalid user_id")
+		return
+	}
 
 	var req dto.UpdateUserStatusRequest
 
@@ -100,7 +108,7 @@ func (c *controller) UpdateStatus(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.service.UpdateStatus(ctx.Request.Context(), id, model.Status(req.Status)); err != nil {
+	if err := c.service.UpdateStatus(ctx.Request.Context(), userId, model.Status(req.Status)); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})

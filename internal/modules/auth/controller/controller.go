@@ -31,7 +31,6 @@ func (c *controller) Register(ctx *gin.Context) {
 
 	if err := validation.Validate(ctx, &req); err != nil {
 		response.JsonErrorResponse(ctx, err.Error())
-		// response.JsonErrorResponse(c, err.Error())
 		return
 	}
 
@@ -41,7 +40,7 @@ func (c *controller) Register(ctx *gin.Context) {
 		return
 	}
 
-	response.JsonCreatedResponse(ctx, res, "")
+	response.JsonCreatedResponse(ctx, res, "Registration successful")
 }
 
 func (c *controller) Login(ctx *gin.Context) {
@@ -58,7 +57,7 @@ func (c *controller) Login(ctx *gin.Context) {
 		return
 	}
 
-	response.JsonSuccessResponse(ctx, res, "")
+	response.JsonSuccessResponse(ctx, res, "Login Successful")
 }
 
 func (c *controller) Refresh(ctx *gin.Context) {

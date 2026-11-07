@@ -114,6 +114,6 @@ func registerRoutes(db *gorm.DB, logger *slog.Logger, conf config.Config, r *gin
 
 	appBase := base.New(db, logger, conf).LoadController()
 
-	auth.RegisterRoutes(v1, appBase.AuthC)
-	user.RegisterRoutes(v1, appBase.UserC)
+	auth.RegisterRoutes(v1, appBase.AuthC, conf.JWT.Secret)
+	user.RegisterRoutes(v1, appBase.UserC, conf.JWT.Secret)
 }

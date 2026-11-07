@@ -6,18 +6,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(r *gin.RouterGroup, controller controller.ControllerInterface) {
-	// apiV1 := c.Group("/api/v1")
-
+func RegisterRoutes(
+	r *gin.RouterGroup,
+	controller controller.ControllerInterface,
+	jwtSecret string,
+) {
 	auth := r.Group("/auth")
 	auth.POST("/register", controller.Register)
 	auth.POST("/login", controller.Login)
 
 	protectedRoute := r.Group("")
-	protectedRoute.Use(middleware.AuthMiddleware)
+	protectedRoute.Use(middleware.AuthMiddleware(jwtSecret))
 
 	protectedRoute.POST("/refresh", controller.Refresh)
 	protectedRoute.POST("/logout", controller.Logout)
-	// protectedRoute.GET("/me", handler.Me)
-
 }

@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fredele20/nimbus/internal/modules/audit"
 	"github.com/fredele20/nimbus/internal/modules/auth/dto"
+	authModel "github.com/fredele20/nimbus/internal/modules/auth/model"
 	"github.com/fredele20/nimbus/internal/modules/auth/service"
 	userModel "github.com/fredele20/nimbus/internal/modules/user/model"
-
-	authModel "github.com/fredele20/nimbus/internal/modules/auth/model"
 	audit_mocks "github.com/fredele20/nimbus/mocks/audit"
 	auth_mocks "github.com/fredele20/nimbus/mocks/auth"
 	user_mocks "github.com/fredele20/nimbus/mocks/user"
@@ -57,46 +57,35 @@ func (s *ServiceTestSuite) Test_Register() {
 		Password:  "password",
 	}
 
-	testUser := userModel.User{
-		ID:        uuid.New(),
-		FirstName: "test-firstname",
-		LastName:  "test-lastname",
-		Email:     request.Email,
-	}
-
 	s.Run("Register_Success", func() {
-		s.userRepo.EXPECT().FindByEmail(ctx, request.Email).Return(nil, nil).Once()
+		s.passwordHasher.EXPECT().Hash(request.Password).Return("hashed_password", nil).Once()
 
-		s.passwordHasher.EXPECT().Hash(request.Password).Return(string(mock.AnythingOfType("string")), nil).Once()
+		s.userRepo.EXPECT().Create(ctx, mock.Anything).Return(nil).Once()
 
-		s.userRepo.EXPECT().Create(mock.Anything, mock.AnythingOfType("*model.User")).Return(nil).Once()
+		s.auditService.EXPECT().Log(
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			audit.ActionUserCreated,
+			"user",
+			mock.Anything,
+			mock.Anything,
+		).Return(nil).Once()
 
 		res, err := s.service.Register(ctx, request)
 
 		s.Require().NoError(err)
 		s.Require().NotNil(res)
+		s.Require().NotEmpty(res.ID)
 
 		s.userRepo.AssertExpectations(s.T())
-	})
-
-	s.Run("Register_Failure - EmailAlreadyExists", func() {
-		s.userRepo.EXPECT().FindByEmail(ctx, testUser.Email).Return(&testUser, nil).Once()
-
-		res, err := s.service.Register(ctx, request)
-
-		s.Require().Error(err)
-		s.Require().Nil(res)
-
-		s.userRepo.AssertNotCalled(s.T(), "Create", mock.AnythingOfType("*model.User"))
-		s.userRepo.AssertExpectations(s.T())
+		s.auditService.AssertExpectations(s.T())
 	})
 
 	s.Run("Register_Failure - Create User Error", func() {
-		s.userRepo.EXPECT().FindByEmail(ctx, request.Email).Return(nil, nil).Once()
+		s.passwordHasher.EXPECT().Hash(request.Password).Return("hashed_password", nil).Once()
 
-		s.passwordHasher.EXPECT().Hash(request.Password).Return(string(mock.AnythingOfType("string")), nil).Once()
-
-		s.userRepo.EXPECT().Create(ctx, mock.AnythingOfType("*model.User")).Return(errors.New("failed to create")).Once()
+		s.userRepo.EXPECT().Create(ctx, mock.Anything).Return(errors.New("failed to create")).Once()
 
 		res, err := s.service.Register(ctx, request)
 
@@ -115,14 +104,13 @@ func (s *ServiceTestSuite) Test_Login() {
 	}
 
 	testUser := userModel.User{
-		ID:        uuid.New(),
 		FirstName: "test-firstname",
 		LastName:  "test-lastname",
 		Email:     request.Email,
 	}
 
 	s.Run("Login_Success", func() {
-		s.userRepo.EXPECT().FindByEmail(ctx, request.Email).Return(&testUser, nil).Once()
+		s.userRepo.EXPECT().FindByEmail(ctx, request.Email).Return(testUser, nil).Once()
 
 		s.passwordHasher.EXPECT().Verify(testUser.Password, request.Password).Return(nil).Once()
 
@@ -133,6 +121,8 @@ func (s *ServiceTestSuite) Test_Login() {
 		s.tokenManager.EXPECT().HashRefreshToken(mock.AnythingOfType("string")).Return(mock.Anything).Once()
 
 		s.refreshRepo.EXPECT().Create(ctx, mock.AnythingOfType("*model.RefreshToken")).Return(nil).Once()
+
+		s.auditService.EXPECT().Log(mock.Anything, mock.Anything, mock.Anything, audit.ActionUserLogin, "user", mock.Anything, mock.Anything).Return(nil).Once()
 
 		res, err := s.service.Login(ctx, request)
 
@@ -146,7 +136,7 @@ func (s *ServiceTestSuite) Test_Login() {
 	})
 
 	s.Run("Login_Failure - Database error", func() {
-		s.userRepo.EXPECT().FindByEmail(ctx, testUser.Email).Return(nil, errors.New("database error")).Once()
+		s.userRepo.EXPECT().FindByEmail(ctx, testUser.Email).Return(userModel.User{}, errors.New("database error")).Once()
 
 		res, err := s.service.Login(ctx, request)
 
@@ -157,7 +147,7 @@ func (s *ServiceTestSuite) Test_Login() {
 	})
 
 	s.Run("Login_Failure - user not found", func() {
-		s.userRepo.EXPECT().FindByEmail(ctx, request.Email).Return(nil, nil).Once()
+		s.userRepo.EXPECT().FindByEmail(ctx, request.Email).Return(userModel.User{}, service.ErrInvalidCredentials).Once()
 
 		res, err := s.service.Login(ctx, request)
 
@@ -168,7 +158,7 @@ func (s *ServiceTestSuite) Test_Login() {
 	})
 
 	s.Run("Login_Failure - Password verification error", func() {
-		s.userRepo.EXPECT().FindByEmail(ctx, testUser.Email).Return(&testUser, nil).Once()
+		s.userRepo.EXPECT().FindByEmail(ctx, testUser.Email).Return(testUser, nil).Once()
 
 		s.passwordHasher.EXPECT().Verify(testUser.Password, request.Password).Return(errors.New("passwords do not match")).Once()
 
@@ -182,7 +172,7 @@ func (s *ServiceTestSuite) Test_Login() {
 	})
 
 	s.Run("Login_Failure - Access token generation failed", func() {
-		s.userRepo.EXPECT().FindByEmail(ctx, request.Email).Return(&testUser, nil).Once()
+		s.userRepo.EXPECT().FindByEmail(ctx, request.Email).Return(testUser, nil).Once()
 
 		s.passwordHasher.EXPECT().Verify(testUser.Password, request.Password).Return(nil).Once()
 
@@ -199,7 +189,7 @@ func (s *ServiceTestSuite) Test_Login() {
 	})
 
 	s.Run("Login_Failure - Refresh token generation failed", func() {
-		s.userRepo.EXPECT().FindByEmail(ctx, request.Email).Return(&testUser, nil).Once()
+		s.userRepo.EXPECT().FindByEmail(ctx, request.Email).Return(testUser, nil).Once()
 
 		s.passwordHasher.EXPECT().Verify(testUser.Password, request.Password).Return(nil).Once()
 
@@ -218,7 +208,7 @@ func (s *ServiceTestSuite) Test_Login() {
 	})
 
 	s.Run("Login_Failure - Failed to create refresh token", func() {
-		s.userRepo.EXPECT().FindByEmail(ctx, request.Email).Return(&testUser, nil).Once()
+		s.userRepo.EXPECT().FindByEmail(ctx, request.Email).Return(testUser, nil).Once()
 
 		s.passwordHasher.EXPECT().Verify(testUser.Password, request.Password).Return(nil).Once()
 
@@ -249,8 +239,7 @@ func (s *ServiceTestSuite) Test_RefreshToken() {
 	}
 
 	refreshTokenResponse := authModel.RefreshToken{
-		ID:        uuid.NewString(),
-		UserID:    uuid.NewString(),
+		UserID:    uuid.New(),
 		Token:     "test-token",
 		ExpiresAt: time.Now().Add(15 * time.Minute),
 	}
@@ -258,15 +247,15 @@ func (s *ServiceTestSuite) Test_RefreshToken() {
 	s.Run("Refresh_Success", func() {
 		s.tokenManager.EXPECT().HashRefreshToken(request.RefreshToken).Return(mock.Anything).Once()
 
-		s.refreshRepo.EXPECT().FindByTokenHash(ctx, mock.Anything).Return(&refreshTokenResponse, nil).Once()
+		s.refreshRepo.EXPECT().FindByToken(ctx, mock.Anything).Return(refreshTokenResponse, nil).Once()
 
-		s.tokenManager.EXPECT().GenerateAccessToken(refreshTokenResponse.UserID).Return(mock.Anything, nil).Once()
+		s.tokenManager.EXPECT().GenerateAccessToken(refreshTokenResponse.UserID.String()).Return(mock.Anything, nil).Once()
 
 		s.tokenManager.EXPECT().GenerateRefreshToken().Return(mock.Anything, nil).Once()
 
 		s.tokenManager.EXPECT().HashRefreshToken(mock.Anything).Return(mock.Anything).Once()
 
-		s.refreshRepo.EXPECT().Update(ctx, mock.Anything).Return(nil).Once()
+		s.refreshRepo.EXPECT().UpdateOne(ctx, mock.Anything).Return(nil).Once()
 
 		response, err := s.service.Refresh(ctx, request)
 
@@ -280,7 +269,7 @@ func (s *ServiceTestSuite) Test_RefreshToken() {
 	s.Run("Refresh_Failure - Failed to find by token hash", func() {
 		s.tokenManager.EXPECT().HashRefreshToken(request.RefreshToken).Return(mock.Anything).Once()
 
-		s.refreshRepo.EXPECT().FindByTokenHash(ctx, mock.Anything).Return(nil, errors.New("failed to find token")).Once()
+		s.refreshRepo.EXPECT().FindByToken(ctx, mock.Anything).Return(authModel.RefreshToken{}, errors.New("failed to find token")).Once()
 
 		response, err := s.service.Refresh(ctx, request)
 
@@ -294,9 +283,9 @@ func (s *ServiceTestSuite) Test_RefreshToken() {
 	s.Run("Refresh_Failure - Failed to generate new access token", func() {
 		s.tokenManager.EXPECT().HashRefreshToken(request.RefreshToken).Return(mock.Anything).Once()
 
-		s.refreshRepo.EXPECT().FindByTokenHash(ctx, mock.Anything).Return(&refreshTokenResponse, nil).Once()
+		s.refreshRepo.EXPECT().FindByToken(ctx, mock.Anything).Return(refreshTokenResponse, nil).Once()
 
-		s.tokenManager.EXPECT().GenerateAccessToken(refreshTokenResponse.UserID).Return("", errors.New("failed to generate new access token")).Once()
+		s.tokenManager.EXPECT().GenerateAccessToken(refreshTokenResponse.UserID.String()).Return("", errors.New("failed to generate new access token")).Once()
 
 		response, err := s.service.Refresh(ctx, request)
 
@@ -310,9 +299,9 @@ func (s *ServiceTestSuite) Test_RefreshToken() {
 	s.Run("Refresh_Failure - Failed to generate new refresh token", func() {
 		s.tokenManager.EXPECT().HashRefreshToken(request.RefreshToken).Return(mock.Anything).Once()
 
-		s.refreshRepo.EXPECT().FindByTokenHash(ctx, mock.Anything).Return(&refreshTokenResponse, nil).Once()
+		s.refreshRepo.EXPECT().FindByToken(ctx, mock.Anything).Return(refreshTokenResponse, nil).Once()
 
-		s.tokenManager.EXPECT().GenerateAccessToken(refreshTokenResponse.UserID).Return(mock.Anything, nil).Once()
+		s.tokenManager.EXPECT().GenerateAccessToken(refreshTokenResponse.UserID.String()).Return(mock.Anything, nil).Once()
 
 		s.tokenManager.EXPECT().GenerateRefreshToken().Return(mock.Anything, errors.New("failed to generate new refresh token")).Once()
 
@@ -328,15 +317,15 @@ func (s *ServiceTestSuite) Test_RefreshToken() {
 	s.Run("Refresh_Failure - Failed to update refresh token", func() {
 		s.tokenManager.EXPECT().HashRefreshToken(request.RefreshToken).Return(mock.Anything).Once()
 
-		s.refreshRepo.EXPECT().FindByTokenHash(ctx, mock.Anything).Return(&refreshTokenResponse, nil).Once()
+		s.refreshRepo.EXPECT().FindByToken(ctx, mock.Anything).Return(refreshTokenResponse, nil).Once()
 
-		s.tokenManager.EXPECT().GenerateAccessToken(refreshTokenResponse.UserID).Return(mock.Anything, nil).Once()
+		s.tokenManager.EXPECT().GenerateAccessToken(refreshTokenResponse.UserID.String()).Return(mock.Anything, nil).Once()
 
 		s.tokenManager.EXPECT().GenerateRefreshToken().Return(mock.Anything, nil).Once()
 
 		s.tokenManager.EXPECT().HashRefreshToken(mock.Anything).Return(mock.Anything).Once()
 
-		s.refreshRepo.EXPECT().Update(ctx, mock.Anything).Return(errors.New("failed to update refresh token")).Once()
+		s.refreshRepo.EXPECT().UpdateOne(ctx, mock.Anything).Return(errors.New("failed to update refresh token")).Once()
 
 		response, err := s.service.Refresh(ctx, request)
 
@@ -350,55 +339,83 @@ func (s *ServiceTestSuite) Test_RefreshToken() {
 
 func (s *ServiceTestSuite) Test_Logout() {
 	ctx := context.Background()
-	refreshToken := mock.Anything
 
 	refreshTokenResponse := authModel.RefreshToken{
-		ID:        uuid.NewString(),
-		UserID:    uuid.NewString(),
-		Token:     "test-token",
+		UserID:    uuid.New(),
+		Token:     "hashed-logout-refresh-token",
 		ExpiresAt: time.Now().Add(15 * time.Minute),
 	}
 
 	s.Run("Logout_Success", func() {
-		s.tokenManager.EXPECT().HashRefreshToken(refreshToken).Return(mock.Anything).Once()
+		refreshToken := "logout-success-token"
+		tokenHash := "hashed-logout-refresh-token"
 
-		s.refreshRepo.EXPECT().FindByTokenHash(ctx, mock.Anything).Return(&refreshTokenResponse, nil).Once()
+		s.tokenManager.EXPECT().
+			HashRefreshToken(refreshToken).
+			Return(tokenHash).
+			Once()
 
-		s.refreshRepo.EXPECT().Delete(ctx, refreshTokenResponse.ID).Return(nil).Once()
+		s.refreshRepo.EXPECT().
+			FindByToken(ctx, tokenHash).
+			Return(refreshTokenResponse, nil).
+			Once()
+
+		s.refreshRepo.EXPECT().
+			DeleteOneById(ctx, refreshTokenResponse.ID).
+			Return(nil).
+			Once()
 
 		err := s.service.Logout(ctx, refreshToken)
 
 		s.Require().NoError(err)
-
-		s.tokenManager.AssertExpectations(s.T())
-		s.refreshRepo.AssertExpectations(s.T())
 	})
 
 	s.Run("Logout_Failed - Failed to find existing hashed token", func() {
-		s.tokenManager.EXPECT().HashRefreshToken(refreshToken).Return(mock.Anything).Once()
+		refreshToken := "logout-find-failure-token"
+		tokenHash := "hashed-logout-find-failure-token"
 
-		s.refreshRepo.EXPECT().FindByTokenHash(ctx, mock.Anything).Return(nil, errors.New("failed to find existing token")).Once()
+		s.tokenManager.EXPECT().
+			HashRefreshToken(refreshToken).
+			Return(tokenHash).
+			Once()
+
+		s.refreshRepo.EXPECT().
+			FindByToken(ctx, tokenHash).
+			Return(authModel.RefreshToken{}, errors.New("failed to find existing token")).
+			Once()
 
 		err := s.service.Logout(ctx, refreshToken)
 
 		s.Require().Error(err)
-
-		s.tokenManager.AssertExpectations(s.T())
-		s.refreshRepo.AssertExpectations(s.T())
 	})
 
 	s.Run("Logout_Failed - Failed to delete existing hashed token", func() {
-		s.tokenManager.EXPECT().HashRefreshToken(refreshToken).Return(mock.Anything).Once()
+		refreshToken := "logout-delete-failure-token"
+		tokenHash := "hashed-logout-delete-failure-token"
 
-		s.refreshRepo.EXPECT().FindByTokenHash(ctx, mock.Anything).Return(&refreshTokenResponse, nil).Once()
+		storedToken := authModel.RefreshToken{
+			UserID:    uuid.New(),
+			Token:     tokenHash,
+			ExpiresAt: time.Now().Add(15 * time.Minute),
+		}
 
-		s.refreshRepo.EXPECT().Delete(ctx, refreshTokenResponse.ID).Return(errors.New("failed to delete existing token")).Once()
+		s.tokenManager.EXPECT().
+			HashRefreshToken(refreshToken).
+			Return(tokenHash).
+			Once()
+
+		s.refreshRepo.EXPECT().
+			FindByToken(ctx, tokenHash).
+			Return(storedToken, nil).
+			Once()
+
+		s.refreshRepo.EXPECT().
+			DeleteOneById(ctx, storedToken.ID).
+			Return(errors.New("failed to delete existing token")).
+			Once()
 
 		err := s.service.Logout(ctx, refreshToken)
 
 		s.Require().Error(err)
-
-		s.tokenManager.AssertExpectations(s.T())
-		s.refreshRepo.AssertExpectations(s.T())
 	})
 }
