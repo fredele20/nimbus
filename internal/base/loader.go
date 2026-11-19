@@ -20,6 +20,7 @@ func (b *base) LoadController() baseControllers {
 
 	bc.AuthC = b.WithAuthController()
 	bc.UserC = b.WithUserController()
+	bc.WalletC = b.WithWalletController()
 
 	return bc
 }
