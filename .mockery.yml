@@ -51,3 +51,12 @@ packages:
       structname: "Mock{{ .InterfaceName }}"
     interfaces:
       Service:
+
+  github.com/fredele20/nimbus/internal/modules/wallet/repository:
+    config:
+      dir: mocks/wallet
+      pkgname: wallet_mocks
+      filename: "{{ .InterfaceName | snakecase }}.go"
+      structname: "Mock{{ .InterfaceName }}"
+    interfaces:
+      Repository:

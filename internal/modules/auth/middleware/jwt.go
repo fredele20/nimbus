@@ -16,6 +16,7 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 
 		if authHeader == "" {
 			response.JsonStatusErrorResponse(c, http.StatusUnauthorized, "authorization header is required")
+			c.Abort()
 			return
 		}
 
@@ -23,12 +24,14 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 
 		if len(parts) != 2 || parts[0] != prefix || parts[1] == "" {
 			response.JsonStatusErrorResponse(c, http.StatusUnauthorized, "invalid authorization header")
+			c.Abort()
 			return
 		}
 
 		claims, err := token.New(jwtSecret).Parse(parts[1])
 		if err != nil {
 			response.JsonStatusErrorResponse(c, http.StatusUnauthorized, "invalid or expired token")
+			c.Abort()
 			return
 		}
 

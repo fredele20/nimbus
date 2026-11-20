@@ -13,6 +13,7 @@ import (
 	"github.com/fredele20/nimbus/internal/base"
 	"github.com/fredele20/nimbus/internal/modules/auth"
 	"github.com/fredele20/nimbus/internal/modules/user"
+	"github.com/fredele20/nimbus/internal/modules/wallet"
 	"github.com/fredele20/nimbus/internal/platform/cache"
 	"github.com/fredele20/nimbus/internal/platform/config"
 	"github.com/fredele20/nimbus/internal/platform/database"
@@ -115,5 +116,6 @@ func registerRoutes(db *gorm.DB, logger *slog.Logger, conf config.Config, r *gin
 	appBase := base.New(db, logger, conf).LoadController()
 
 	auth.RegisterRoutes(v1, appBase.AuthC, conf.JWT.Secret)
-	user.RegisterRoutes(v1, appBase.UserC, conf.JWT.Secret)
+	user.RegisterRoutes(v1, appBase.UserC, conf.JWT.Secret, db)
+	wallet.RegisterRoutes(v1, appBase.WalletC, conf.JWT.Secret, db)
 }

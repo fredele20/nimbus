@@ -6,6 +6,7 @@ import (
 	authService "github.com/fredele20/nimbus/internal/modules/auth/service"
 	"github.com/fredele20/nimbus/internal/modules/auth/token"
 	userService "github.com/fredele20/nimbus/internal/modules/user/service"
+	walletService "github.com/fredele20/nimbus/internal/modules/wallet/service"
 )
 
 func (b *base) WithUserService() userService.Service {
@@ -25,6 +26,14 @@ func (b *base) WithAuthService() authService.Service {
 		b.WithTokenManager(),
 		b.logger,
 	)
+}
+
+func (b *base) WithWalletService() walletService.Service {
+	return walletService.New(b.WithWalletRepository())
+}
+
+func (b *base) WithAdminWalletService() walletService.AdminService {
+	return walletService.NewAdmin(b.WithWalletRepository())
 }
 
 func (b *base) WithPasswordHasher() password.PasswordHasher {

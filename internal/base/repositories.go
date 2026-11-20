@@ -4,6 +4,7 @@ import (
 	auditRepository "github.com/fredele20/nimbus/internal/modules/audit/repository"
 	authRepository "github.com/fredele20/nimbus/internal/modules/auth/repository"
 	userRepository "github.com/fredele20/nimbus/internal/modules/user/repository"
+	walletRepository "github.com/fredele20/nimbus/internal/modules/wallet/repository"
 )
 
 func (b *base) WithUserRepository() userRepository.Repository {
@@ -18,3 +19,6 @@ func (b *base) WithAuditRepository() auditRepository.Repository {
 	return auditRepository.New(b.db)
 }
 
+func (b *base) WithWalletRepository() walletRepository.Repository {
+	return walletRepository.New(b.db)
+}

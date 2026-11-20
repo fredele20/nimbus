@@ -5,18 +5,27 @@ import (
 	"github.com/fredele20/nimbus/internal/modules/user/controller"
 	"github.com/fredele20/nimbus/internal/modules/user/model"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func RegisterRoutes(router *gin.RouterGroup, controller controller.ControllerInterface, jwtSecret string) {
+func RegisterRoutes(router *gin.RouterGroup, controller controller.ControllerInterface, jwtSecret string, db *gorm.DB) {
 	authUser := router.Group("")
-	authUser.Use(authmiddleware.AuthMiddleware(jwtSecret))
+	authUser.Use(
+		authmiddleware.AuthMiddleware(jwtSecret),
+		authmiddleware.LoadUser(db),
+		authmiddleware.RequireActiveUser(),
+	)
 
 	authUser.GET("/me", controller.GetProfile)
 	authUser.PATCH("/me", controller.UpdateProfile)
 
 	admin := router.Group("/admin")
 
-	admin.Use(authmiddleware.AuthMiddleware(jwtSecret), authmiddleware.RequireRole(string(model.Admin)))
+	admin.Use(
+		authmiddleware.AuthMiddleware(jwtSecret),
+		authmiddleware.LoadUser(db),
+		authmiddleware.RequireRole(string(model.Admin)),
+	)
 
 	admin.GET("/users", controller.ListUsers)
 

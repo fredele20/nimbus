@@ -5,6 +5,7 @@ import (
 
 	authController "github.com/fredele20/nimbus/internal/modules/auth/controller"
 	userController "github.com/fredele20/nimbus/internal/modules/user/controller"
+	walletController "github.com/fredele20/nimbus/internal/modules/wallet/controller"
 	"github.com/fredele20/nimbus/internal/platform/config"
 	"gorm.io/gorm"
 )
@@ -16,6 +17,7 @@ type base struct {
 }
 
 type baseControllers struct {
-	AuthC authController.ControllerInterface
-	UserC userController.ControllerInterface
+	AuthC   authController.ControllerInterface
+	UserC   userController.ControllerInterface
+	WalletC walletController.ControllerInterface
 }

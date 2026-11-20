@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/fredele20/nimbus/internal/modules/auth/context"
+	"github.com/fredele20/nimbus/internal/modules/user/model"
+	"github.com/fredele20/nimbus/internal/shared/http/response"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,22 +16,26 @@ func RequireRole(roles ...string) gin.HandlerFunc {
 		allowedRoles[role] = struct{}{}
 	}
 
-	return func(c *gin.Context) {
-		user, userErr := context.UserFromContext(c)
+	return func(ctx *gin.Context) {
+		user, userErr := context.UserFromContext(ctx)
 		if userErr != nil || user == nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "unauthorized",
-			})
+			response.JsonStatusErrorResponse(ctx, http.StatusUnauthorized, "unauthorized")
+			ctx.Abort()
 			return
 		}
 
-		if _, ok := allowedRoles[string(user.Role)]; !ok {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-				"error": "forbidden",
-			})
+		if user.Status != model.StatusActive {
+			response.JsonStatusErrorResponse(ctx, http.StatusForbidden, "account is not active	")
+			ctx.Abort()
 			return
 		}
 
-		c.Next()
+		if _, allowed := allowedRoles[string(user.Role)]; !allowed {
+			response.JsonStatusErrorResponse(ctx, http.StatusForbidden, "forbidden")
+			ctx.Abort()
+			return
+		}
+
+		ctx.Next()
 	}
 }
